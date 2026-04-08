@@ -1,0 +1,15 @@
+# Chặn các file dữ liệu nặng (Nguyên nhân gây lỗi push)
+data/*.csv
+data/*.json
+
+# Chặn các thư mục rác của Python
+__pycache__/
+*.pyc
+.env
+.venv/
+env/
+venv/
+
+# Các file hệ thống
+.DS_Store
+Thumbs.db
