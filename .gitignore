@@ -1,15 +1,35 @@
-# Chặn các file dữ liệu nặng (Nguyên nhân gây lỗi push)
+# ═══════════════════════════════════════════════════
+# .gitignore — Job Recommender System
+# ═══════════════════════════════════════════════════
+
+# Data files (too large for git)
 data/*.csv
 data/*.json
 
-# Chặn các thư mục rác của Python
+# Python
 __pycache__/
 *.pyc
-.env
 .venv/
 env/
 venv/
 
-# Các file hệ thống
+# Node.js
+node_modules/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# IDE
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
+
+# Uploads
+uploads/
+
+# Logs
+*.log
