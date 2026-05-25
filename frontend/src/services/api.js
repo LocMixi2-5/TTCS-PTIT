@@ -67,6 +67,14 @@ export const jobsAPI = {
   getById: (id) => api.get(`/api/jobs/${id}`),
   toggleBookmark: (id) => api.post(`/api/jobs/${id}/bookmark`),
   recordApply: (id, data = {}) => api.post(`/api/jobs/${id}/apply`, data),
+  applyWithCV: (jobId, file) => {
+    const formData = new FormData();
+    formData.append('cv_file', file);
+    return api.post(`/api/jobs/${jobId}/apply-cv`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 90000, // 90s — AI processing can be slow
+    });
+  },
 };
 
 // ─── Tracking API ────────────────────────────────

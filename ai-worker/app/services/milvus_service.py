@@ -56,7 +56,7 @@ class MilvusService:
             print(f">>> Connected to Milvus collection '{COLLECTION_NAME}' (Entities: {self.collection.num_entities})")
 
         except Exception as e:
-            print(f"⚠️  Milvus connection failed: {e}")
+            print(f"[WARN] Milvus connection failed: {e}")
             print("   Falling back to numpy cosine similarity")
             self.connected = False
 

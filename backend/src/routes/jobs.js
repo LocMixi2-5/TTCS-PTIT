@@ -3,15 +3,30 @@
 //
 // GET  /api/jobs/:id          — Get job details
 // POST /api/jobs/:id/bookmark — Toggle bookmark
-// POST /api/jobs/:id/apply    — Record application
+// POST /api/jobs/:id/apply    — Record application (tracking only)
+// POST /api/jobs/:id/apply-cv — Upload CV & get instant match score
 // ═══════════════════════════════════════════════════
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const FormData = require('form-data');
+const axios = require('axios');
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
-
 router.use(authenticateToken);
+
+// ─── Multer for CV upload (temp, not saved to disk) ─
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') cb(null, true);
+    else cb(new Error('Chỉ chấp nhận file PDF'), false);
+  },
+});
 
 // ─── GET /api/jobs/:id ───────────────────────────
 router.get('/:id', async (req, res, next) => {
@@ -90,6 +105,92 @@ router.post('/:id/apply', async (req, res, next) => {
     res.json({
       message: 'Application recorded',
       job_url: job.job_url,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /api/jobs/:id/apply-cv ─────────────────
+// Upload CV PDF → AI match with specific job → instant score
+router.post('/:id/apply-cv', upload.single('cv_file'), async (req, res, next) => {
+  try {
+    const jobId = parseInt(req.params.id);
+
+    // 1. Get job details (need description + skills for matching)
+    const job = await db('jobs')
+      .select('id', 'title', 'description', 'skills_desc', 'required_skills', 'company_name', 'experience_level', 'location', 'salary_range', 'company_id')
+      .where({ id: jobId, is_active: true })
+      .first();
+
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+
+    if (!req.file) return res.status(400).json({ error: 'Vui lòng upload file CV (PDF)' });
+
+    // 2. Build job context text for matching
+    const jobText = `${job.title} ${job.description || ''} ${job.skills_desc || ''}`;
+
+    // 3. Forward CV to AI Worker for matching
+    const aiWorkerUrl = process.env.AI_WORKER_URL || 'http://localhost:8000';
+    const formData = new FormData();
+    formData.append('file', req.file.buffer, {
+      filename: 'cv.pdf',
+      contentType: 'application/pdf',
+    });
+    formData.append('manual_text', '');
+    formData.append('top_k', '1');
+    formData.append('min_score', '0.0');
+    // Also send job text for direct comparison
+    formData.append('job_text', jobText);
+
+    let aiResult;
+    try {
+      const response = await axios.post(`${aiWorkerUrl}/api/ai/match-job`, formData, {
+        headers: formData.getHeaders(),
+        timeout: 60000,
+      });
+      aiResult = response.data;
+    } catch (aiErr) {
+      // AI worker unavailable — return basic result
+      console.warn('[apply-cv] AI worker unreachable:', aiErr.message);
+      return res.json({
+        job_id: jobId,
+        job_title: job.title,
+        company_name: job.company_name,
+        match_score: null,
+        cv_skills: [],
+        matched_skills: [],
+        missing_skills: job.required_skills || [],
+        ai_available: false,
+        message: 'AI worker không khả dụng. CV của bạn đã được ghi nhận.',
+      });
+    }
+
+    // 4. Compute matched/missing skills
+    const jobSkills = (job.required_skills || []).map(s => s.toLowerCase());
+    const cvSkills = (aiResult.cv_skills_extracted || []).map(s => s.toLowerCase());
+    const matchedSkills = jobSkills.filter(s => cvSkills.includes(s));
+    const missingSkills = jobSkills.filter(s => !cvSkills.includes(s));
+
+    // 5. Record apply tracking event
+    await db('user_tracking_events').insert({
+      user_id: req.user.id,
+      session_id: req.body.session_id || '00000000-0000-0000-0000-000000000000',
+      event_type: 'APPLY',
+      job_id: jobId,
+      payload: JSON.stringify({ applied_via: 'cv_upload', match_score: aiResult.match_score }),
+      client_timestamp: new Date(),
+    }).catch(() => {}); // non-blocking
+
+    res.json({
+      job_id: jobId,
+      job_title: job.title,
+      company_name: job.company_name,
+      match_score: aiResult.match_score,
+      cv_skills: aiResult.cv_skills_extracted || [],
+      matched_skills: matchedSkills,
+      missing_skills: missingSkills,
+      ai_available: true,
     });
   } catch (err) {
     next(err);

@@ -8,12 +8,13 @@ import {
   ArrowLeft, Bookmark, BookmarkCheck, ExternalLink,
   MapPin, BarChart3, Target, Filter, SlidersHorizontal,
   CheckCircle2, AlertTriangle, Loader2, Search, Brain,
-  BookOpen, Code2
+  BookOpen, Code2, Send
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { recommendationsAPI, jobsAPI } from '../services/api';
 import { useJobTracking, useJobDwellTime } from '../hooks/useJobTracking';
 import CompanyLogo from '../components/cards/CompanyLogo';
+import ApplyModal from '../components/modals/ApplyModal';
 
 // ─── Score Badge Component ───────────────────────
 function ScoreBadge({ score }) {
@@ -51,6 +52,7 @@ function CircularProgress({ value, size = 56 }) {
 function JobCard({ rec, cvSkills, rank }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(rec.is_bookmarked);
+  const [applyOpen, setApplyOpen] = useState(false);
   const { trackClick, trackBookmark, trackApply } = useJobTracking();
   useJobDwellTime(rec.job.id, isExpanded);
 
@@ -85,14 +87,11 @@ function JobCard({ rec, cvSkills, rank }) {
 
   const handleApply = (e) => {
     e.stopPropagation();
-    trackApply(job.id, { appliedVia: job.job_url ? 'external_link' : 'internal' });
-    if (job.job_url) {
-      window.open(job.job_url, '_blank');
-    }
-    toast.success('Đã ghi nhận ứng tuyển');
+    trackApply(job.id, { appliedVia: 'apply_modal' });
+    setApplyOpen(true);
   };
 
-  return (
+  return (<>
     <motion.div
       layout
       initial={{ opacity: 0, y: 15 }}
@@ -163,9 +162,13 @@ function JobCard({ rec, cvSkills, rank }) {
               <Bookmark size={18} className="text-surface-400 hover:text-white" />
             )}
           </button>
-          <button onClick={handleApply} className="btn-primary text-xs px-3 py-2 flex items-center gap-1">
-            <ExternalLink size={12} />
-            Ứng tuyển
+          <button
+            onClick={handleApply}
+            id={`apply-btn-${job.id}`}
+            className="btn-primary text-xs px-3 py-2 flex items-center gap-1.5"
+          >
+            <Send size={12} />
+            Apply Now
           </button>
         </div>
       </div>
@@ -250,7 +253,14 @@ function JobCard({ rec, cvSkills, rank }) {
         )}
       </AnimatePresence>
     </motion.div>
-  );
+
+    {/* Apply Modal */}
+    <ApplyModal
+      job={{ ...job, id: job.id }}
+      isOpen={applyOpen}
+      onClose={() => setApplyOpen(false)}
+    />
+  </>);
 }
 
 // ═══════════════════════════════════════════════════

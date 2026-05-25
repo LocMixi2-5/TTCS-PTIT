@@ -26,7 +26,7 @@ from app.config import settings
 from app.models.embedding import EmbeddingModel
 from app.services.milvus_service import MilvusService
 from app.services.text_processor import clean_text
-from app.routers import match, jobs
+from app.routers import match, jobs, match_job
 
 
 def load_fallback_jobs(model: EmbeddingModel) -> dict | None:
@@ -144,6 +144,7 @@ app.add_middleware(
 # ─── Register Routers ────────────────────────────
 app.include_router(match.router, prefix="/api/ai", tags=["Matching"])
 app.include_router(jobs.router, prefix="/api/ai", tags=["Jobs Indexing"])
+app.include_router(match_job.router, prefix="/api/ai", tags=["Job Match"])
 
 
 # ─── Health Check ─────────────────────────────────

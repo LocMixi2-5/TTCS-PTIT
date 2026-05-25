@@ -35,6 +35,8 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // Generate unique filename: timestamp_originalname.pdf
+    // Fix multer latin1 encoding issue with utf8 characters
+    file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
     const uniqueName = `${Date.now()}_${file.originalname}`;
     cb(null, uniqueName);
   },
@@ -108,7 +110,8 @@ async function processCV(cvId, filePath) {
 
     // Read file and send to AI worker
     const formData = new (require('form-data'))();
-    formData.append('file', fs.createReadStream(filePath));
+    // Override filename to avoid non-ASCII header issues in FastAPI
+    formData.append('file', fs.createReadStream(filePath), { filename: 'cv.pdf' });
     formData.append('top_k', '20');
     formData.append('min_score', '0.3');
 

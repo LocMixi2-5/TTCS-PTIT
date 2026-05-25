@@ -10,10 +10,11 @@ import {
   ArrowLeft, Globe, Briefcase, Loader2, Building2,
   MapPin, BarChart3, CheckCircle2, Star, Users, Award,
   ChevronDown, ChevronUp, ExternalLink, Zap, Heart,
-  BookOpen, Code2, Coffee, Laptop,
+  BookOpen, Code2, Coffee, Laptop, Send,
 } from 'lucide-react';
 import axios from 'axios';
 import CompanyLogo from '../../components/cards/CompanyLogo';
+import ApplyModal from '../../components/modals/ApplyModal';
 
 // ─── Why Choose Us reasons (per company or generic) ──────────────
 const WHY_US_ITEMS = [
@@ -46,13 +47,14 @@ const WHY_US_ITEMS = [
 // ─── Job Detail Expanded Card ──────────────────────────────────────
 function JobDetailCard({ job, index }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [applyOpen, setApplyOpen] = useState(false);
 
   const skills = job.required_skills || [];
   const descLines = job.description
     ? job.description.split('\n').filter(l => l.trim()).slice(0, 10)
     : [];
 
-  return (
+  return (<>
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -115,17 +117,13 @@ function JobDetailCard({ job, index }) {
 
         {/* Expand icon */}
         <div className="flex-shrink-0 flex items-center gap-2">
-          {job.job_url && (
-            <a
-              href={job.job_url}
-              target="_blank"
-              rel="noreferrer"
-              onClick={e => e.stopPropagation()}
-              className="btn-primary text-xs px-3 py-2 flex items-center gap-1"
-            >
-              <ExternalLink size={12} /> Ứng tuyển
-            </a>
-          )}
+          <button
+            onClick={e => { e.stopPropagation(); setApplyOpen(true); }}
+            id={`company-apply-btn-${job.id}`}
+            className="btn-primary text-xs px-3 py-2 flex items-center gap-1.5"
+          >
+            <Send size={12} /> Apply Now
+          </button>
           <div style={{ color: 'var(--text-muted)' }}>
             {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
@@ -232,7 +230,14 @@ function JobDetailCard({ job, index }) {
         )}
       </AnimatePresence>
     </motion.div>
-  );
+
+    {/* Apply Modal */}
+    <ApplyModal
+      job={job}
+      isOpen={applyOpen}
+      onClose={() => setApplyOpen(false)}
+    />
+  </>);
 }
 
 // ═══════════════════════════════════════════════════
