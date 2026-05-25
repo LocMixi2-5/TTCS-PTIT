@@ -2,6 +2,8 @@ export const companies = [
   {
     id: 'c1',
     name: 'Google Vietnam',
+    shortName: 'GO',
+    themeColor: '#ea4335',
     logo: 'https://logo.clearbit.com/google.com',
     description: 'Google\'s mission is to organize the world\'s information and make it universally accessible and useful.',
     fullDescription: 'Google Việt Nam là trung tâm kỹ thuật và sáng tạo chiến lược tại khu vực Đông Nam Á. Chúng tôi tập trung vào việc mang các giải pháp AI, Cloud và hệ sinh thái di động đến gần hơn với người dùng Việt. Môi trường làm việc tại Google luôn đề cao sự tự do sáng tạo, tôn trọng sự khác biệt và khuyến khích mỗi cá nhân phát huy tối đa tiềm năng của mình thông qua các dự án tầm cỡ toàn cầu.',
@@ -17,7 +19,9 @@ export const companies = [
   {
     id: 'c2',
     name: 'FPT Software',
-    logo: 'https://logo.clearbit.com/fpt.com',
+    shortName: 'FP',
+    themeColor: '#f26522',
+    logo: 'https://logo.clearbit.com/fpt-software.com',
     description: 'Tập đoàn công nghệ hàng đầu Việt Nam, chuyên cung cấp các dịch vụ CNTT trên toàn cầu.',
     fullDescription: 'Là công ty thành viên lớn nhất của Tập đoàn FPT, FPT Software hiện là công ty công nghệ lớn nhất Việt Nam và nằm trong Top những nhà cung cấp dịch vụ phần mềm uy tín toàn cầu. Với hàng chục ngàn kỹ sư làm việc trên nhiều quốc gia, chúng tôi mang đến cơ hội tiếp cận những công nghệ tiên tiến nhất (AI, IoT, Cloud, Automotive) cùng các siêu dự án từ các đối tác Fortune 500.',
     domain: 'Outsourcing & AI',
@@ -32,6 +36,8 @@ export const companies = [
   {
     id: 'c3',
     name: 'Momo',
+    shortName: 'MO',
+    themeColor: '#d82d8b',
     logo: 'https://logo.clearbit.com/momo.vn',
     description: 'Siêu ứng dụng thanh toán số 1 Việt Nam với hệ sinh thái đa dạng.',
     fullDescription: 'MoMo là siêu ứng dụng Fintech hàng đầu tại Việt Nam với hơn 30 triệu người dùng. Chúng tôi mang sứ mệnh ứng dụng công nghệ để đem đến những dịch vụ tài chính bình đẳng và dễ tiếp cận cho mọi người Việt. Đội ngũ kỹ sư tại MoMo luôn đối mặt với những bài toán hóc búa về xử lý giao dịch hàng loạt (high concurrency), bảo mật dữ liệu và ứng dụng AI trong phòng chống gian lận.',
@@ -47,6 +53,8 @@ export const companies = [
   {
     id: 'c4',
     name: 'VNG Corporation',
+    shortName: 'VN',
+    themeColor: '#ff9900',
     logo: 'https://logo.clearbit.com/vng.com.vn',
     description: 'Kỳ lân công nghệ đầu tiên của Việt Nam, phát triển Zalo, VNGGames, Zing MP3.',
     fullDescription: 'VNG là kỳ lân công nghệ đầu tiên của Việt Nam, nổi tiếng với hệ sinh thái sản phẩm đa dạng từ tin nhắn (Zalo), giải trí trực tuyến (Zing MP3, VNGGames) đến thanh toán điện tử (ZaloPay) và điện toán đám mây (VNG Cloud). Chúng tôi kiến tạo nên những sản phẩm công nghệ thay đổi cuộc sống của hàng chục triệu người.',
@@ -62,7 +70,9 @@ export const companies = [
   {
     id: 'c5',
     name: 'Viettel',
-    logo: 'https://logo.clearbit.com/viettel.vn',
+    shortName: 'VT',
+    themeColor: '#ee0033',
+    logo: 'https://logo.clearbit.com/viettel.com.vn',
     description: 'Tập đoàn viễn thông và công nghệ lớn nhất Việt Nam.',
     fullDescription: 'Viettel không chỉ là mạng viễn thông số 1 Việt Nam mà còn là tập đoàn công nghệ tiên phong trong lĩnh vực nghiên cứu sản xuất thiết bị mạng (5G), hàng không vũ trụ, an ninh mạng và chuyển đổi số quốc gia. Gia nhập Viettel là cơ hội tham gia vào các dự án trọng điểm mang tầm vóc quốc gia và quốc tế.',
     domain: 'Telecom & Tech',
@@ -76,7 +86,9 @@ export const companies = [
   },
   {
     id: 'c6',
-    name: 'Shopee Vietnam',
+    name: 'Shopee',
+    shortName: 'SH',
+    themeColor: '#ee4d2d',
     logo: 'https://logo.clearbit.com/shopee.vn',
     description: 'Nền tảng thương mại điện tử hàng đầu Đông Nam Á và Đài Loan.',
     fullDescription: 'Trực thuộc tập đoàn Sea, Shopee là nền tảng thương mại điện tử phát triển nhanh nhất khu vực. Tại Shopee, đội ngũ công nghệ (Engineering) liên tục giải quyết các bài toán về tối ưu hóa hệ thống mua sắm, hệ thống đề xuất (recommendation system) và quản lý chuỗi cung ứng quy mô khổng lồ.',
@@ -92,6 +104,8 @@ export const companies = [
   {
     id: 'c7',
     name: 'Tiki',
+    shortName: 'TI',
+    themeColor: '#1a94ff',
     logo: 'https://logo.clearbit.com/tiki.vn',
     description: 'Nền tảng thương mại điện tử đáng tin cậy nhất Việt Nam.',
     fullDescription: 'Tiki là một trong những nền tảng thương mại điện tử lớn nhất do người Việt sáng lập và xây dựng. Điểm mạnh cốt lõi của Tiki nằm ở hệ thống vận hành và logistics thần tốc (TikiNow). Đội ngũ kỹ sư tại Tiki tập trung vào kiến trúc Microservices, Data Engineering và tối ưu hóa hệ thống kho vận bằng AI.',
@@ -107,6 +121,8 @@ export const companies = [
   {
     id: 'c8',
     name: 'NashTech',
+    shortName: 'NA',
+    themeColor: '#e3000f',
     logo: 'https://logo.clearbit.com/nashtechglobal.com',
     description: 'Chuyên cung cấp các giải pháp phần mềm, chuyển đổi số tiêu chuẩn quốc tế.',
     fullDescription: 'Là công ty công nghệ có nguồn gốc từ Anh Quốc, NashTech là đối tác chuyển đổi số đáng tin cậy của hàng ngàn tập đoàn toàn cầu. Chúng tôi tự hào mang đến môi trường làm việc đậm chất Châu Âu: chuyên nghiệp, cân bằng và tập trung vào chất lượng code chuẩn quốc tế.',
@@ -122,6 +138,8 @@ export const companies = [
   {
     id: 'c9',
     name: 'Grab Vietnam',
+    shortName: 'GR',
+    themeColor: '#00b14f',
     logo: 'https://logo.clearbit.com/grab.com',
     description: 'Siêu ứng dụng hàng đầu Đông Nam Á cung cấp dịch vụ gọi xe, giao hàng và thanh toán.',
     fullDescription: 'Tại Grab, chúng tôi sử dụng dữ liệu và công nghệ để giải quyết các bài toán giao thông, vận chuyển và tài chính cho hàng triệu người Đông Nam Á. Kỹ sư tại Grab liên tục đối mặt với bài toán tối ưu hóa thời gian thực (real-time routing) và xử lý dữ liệu khổng lồ (Big Data).',
@@ -137,6 +155,8 @@ export const companies = [
   {
     id: 'c10',
     name: 'VNPAY',
+    shortName: 'VN',
+    themeColor: '#ed1b24',
     logo: 'https://logo.clearbit.com/vnpay.vn',
     description: 'Kỳ lân Fintech thứ 2 tại Việt Nam, tiên phong trong thanh toán điện tử QR Code.',
     fullDescription: 'VNPAY là đơn vị đi đầu trong lĩnh vực thanh toán điện tử tại Việt Nam. Chúng tôi xây dựng mạng lưới thanh toán QR Code lớn nhất quốc gia, kết nối hàng ngàn ngân hàng và hàng triệu điểm bán lẻ. Môi trường tại VNPAY mang tính bảo mật cao, hệ thống ổn định và liên tục mở rộng.',
@@ -152,6 +172,8 @@ export const companies = [
   {
     id: 'c11',
     name: 'KMS Technology',
+    shortName: 'KM',
+    themeColor: '#005b9f',
     logo: 'https://logo.clearbit.com/kms-technology.com',
     description: 'Công ty công nghệ Mỹ hàng đầu với môi trường làm việc cởi mở và phúc lợi cực tốt.',
     fullDescription: 'KMS Technology là công ty dịch vụ phần mềm của Mỹ có trụ sở chính tại Atlanta và trung tâm phát triển tại Việt Nam. Không chỉ nổi tiếng về Outsourcing, KMS còn là bệ phóng cho nhiều sản phẩm phần mềm (Product) vươn tầm thế giới (QASymphony, Katalon).',
@@ -167,6 +189,8 @@ export const companies = [
   {
     id: 'c12',
     name: 'Giao Hàng Tiết Kiệm',
+    shortName: 'GH',
+    themeColor: '#008543',
     logo: 'https://logo.clearbit.com/giaohangtietkiem.vn',
     description: 'Công ty công nghệ bưu chính số 1 Việt Nam, với mạng lưới logistics phủ khắp 63 tỉnh thành.',
     fullDescription: 'GHTK (Giao Hàng Tiết Kiệm) được định hình là một công ty công nghệ chứ không đơn thuần là vận chuyển. Chúng tôi tự xây dựng toàn bộ hệ thống lõi ERP, App di động và ứng dụng AI/Machine Learning để tối ưu hóa quãng đường giao hàng và vận hành kho bãi.',
@@ -182,6 +206,8 @@ export const companies = [
   {
     id: 'c13',
     name: 'OneMount Group',
+    shortName: 'OM',
+    themeColor: '#1d215b',
     logo: 'https://logo.clearbit.com/onemount.com',
     description: 'Hệ sinh thái công nghệ lớn nhất Việt Nam được hậu thuẫn bởi VinGroup và Techcombank.',
     fullDescription: 'OneMount được thành lập với tham vọng kiến tạo hệ sinh thái công nghệ lớn nhất Việt Nam, bao phủ dọc theo chuỗi giá trị từ tiêu dùng, bán lẻ (VinShop), bất động sản (OneHousing). Tại đây, bạn sẽ được giải những bài toán tích hợp hệ thống đa ngành cực kỳ phức tạp.',
@@ -197,6 +223,8 @@ export const companies = [
   {
     id: 'c14',
     name: 'Cốc Cốc',
+    shortName: 'CC',
+    themeColor: '#4caf50',
     logo: 'https://logo.clearbit.com/coccoc.com',
     description: 'Trình duyệt và công cụ tìm kiếm "Make in Vietnam" với hơn 28 triệu người dùng.',
     fullDescription: 'Cốc Cốc là công ty công nghệ tự phát triển trình duyệt và công cụ tìm kiếm phục vụ riêng cho người Việt. Đội ngũ kỹ sư tại Cốc Cốc luôn đối đầu với bài toán cực khó về tối ưu hóa nhân trình duyệt Chromium, xử lý ngôn ngữ tự nhiên (NLP) tiếng Việt và hệ thống quảng cáo Real-time Bidding.',

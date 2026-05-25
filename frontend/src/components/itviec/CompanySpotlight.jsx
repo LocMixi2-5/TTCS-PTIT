@@ -1,5 +1,6 @@
 import { ArrowRight, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import CompanyLogo from '../cards/CompanyLogo';
 
 export default function CompanySpotlight({ company, featuredJobs = [], isSelected, onClick }) {
   if (!company) return null;
@@ -12,12 +13,8 @@ export default function CompanySpotlight({ company, featuredJobs = [], isSelecte
       
       {/* Left: Logo */}
       <div className="shrink-0 flex justify-center items-start">
-        <div className="w-24 h-24 rounded-lg border border-gray-100 flex items-center justify-center p-2 shadow-sm overflow-hidden bg-white">
-          <img 
-            src={company.logo} 
-            alt={`${company.name} Logo`} 
-            className="w-full h-full object-contain text-sm font-bold text-gray-400 text-center flex items-center justify-center break-words"
-          />
+        <div className="shadow-sm rounded-lg overflow-hidden bg-white p-1 border border-gray-100">
+          <CompanyLogo company={company} size={88} className="rounded-lg" />
         </div>
       </div>
 

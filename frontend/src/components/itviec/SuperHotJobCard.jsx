@@ -1,5 +1,6 @@
 import { MapPin, DollarSign, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
+import CompanyLogo from '../cards/CompanyLogo';
 
 export default function SuperHotJobCard({ job, company }) {
   const [showSalary, setShowSalary] = useState(false);
@@ -24,13 +25,8 @@ export default function SuperHotJobCard({ job, company }) {
       </div>
 
       <div className="flex gap-4 mt-2">
-        {/* Logo */}
-        <div className="w-16 h-16 shrink-0 rounded-md border border-gray-100 p-1 flex items-center justify-center bg-white shadow-sm overflow-hidden">
-          <img 
-            src={company.logo} 
-            alt={company.name} 
-            className="w-full h-full object-contain text-xs font-bold text-gray-400 text-center flex items-center justify-center break-words"
-          />
+        <div className="shrink-0 flex items-center justify-center bg-white shadow-sm rounded-md overflow-hidden p-0.5 border border-gray-100">
+           <CompanyLogo company={company} size={60} className="rounded-md" />
         </div>
 
         {/* Content */}
