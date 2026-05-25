@@ -1,17 +1,10 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Building2, Search, User, LogIn, LogOut, LayoutDashboard, Briefcase } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Building2, Search, User, LogIn, LogOut, LayoutDashboard } from 'lucide-react';
 import useAuthStore from '../../stores/authStore';
 
-export default function Navbar() {
+export default function ITViecNavbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const isActive = (path) => {
-    if (path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(path);
-  };
 
   const handleLogout = () => {
     logout();
@@ -19,44 +12,35 @@ export default function Navbar() {
   };
 
   return (
-    <div className="w-full flex flex-col relative z-50 fixed top-0">
+    <div className="w-full flex flex-col relative z-50">
       {/* Main Navbar */}
       <nav className="w-full h-16 bg-[#002d5c] text-white flex items-center px-6 lg:px-12 justify-between shrink-0 shadow-md">
         <div className="flex items-center gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <span className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <Briefcase size={20} className="text-[#38bdf8]" />
+            <span className="text-2xl font-bold tracking-tight">
               Job<span className="text-[#38bdf8]">AI</span>
             </span>
           </Link>
           
           {/* Nav Links (Desktop) */}
           <div className="hidden md:flex items-center gap-6 font-medium text-sm">
-            <Link 
-              to="/" 
-              className={`transition-all pb-1 border-b-2 ${isActive('/') ? 'border-[#38bdf8] text-white font-bold' : 'border-transparent text-blue-200 hover:text-white hover:border-blue-200/50'}`}
-            >
-              Việc làm IT
-            </Link>
-            <Link 
-              to="/companies" 
-              className={`transition-all pb-1 border-b-2 ${isActive('/companies') ? 'border-[#38bdf8] text-white font-bold' : 'border-transparent text-blue-200 hover:text-white hover:border-blue-200/50'}`}
-            >
-              Khám phá Công ty
-            </Link>
+            <Link to="/jobs" className="hover:text-blue-200 transition-colors">Việc làm IT</Link>
+            <Link to="/companies" className="hover:text-blue-200 transition-colors">Top Công ty</Link>
+            <Link to="/blog" className="hover:text-blue-200 transition-colors">Blog</Link>
           </div>
         </div>
 
         {/* Auth / Actions */}
         <div className="flex items-center gap-4">
+          <Link to="/employers" className="hidden lg:block text-sm font-medium text-blue-200 hover:text-white transition-colors">
+            Nhà tuyển dụng
+          </Link>
+          <div className="w-px h-5 bg-white/20 hidden lg:block"></div>
           
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
-              <Link 
-                to="/dashboard" 
-                className={`flex items-center gap-2 text-sm transition-all pb-1 border-b-2 ${isActive('/dashboard') ? 'border-[#38bdf8] text-white font-bold' : 'border-transparent font-medium text-gray-300 hover:text-white hover:border-white/50'}`}
-              >
+              <Link to="/dashboard" className="flex items-center gap-2 text-sm font-medium hover:text-[#38bdf8] transition-colors">
                 <LayoutDashboard size={18} />
                 <span className="hidden sm:inline">Dashboard</span>
               </Link>
@@ -84,6 +68,12 @@ export default function Navbar() {
           )}
         </div>
       </nav>
+
+      {/* Light Blue Notification Banner */}
+      <div className="w-full bg-[#e8f3ff] text-[#002d5c] py-2 px-4 text-center text-sm font-medium flex items-center justify-center gap-2 border-b border-[#cce4ff]">
+        <span>🎉 Khám phá ngay hệ thống gợi ý việc làm bằng AI SBERT!</span>
+        <Link to="/register" className="underline font-bold text-[#0a66c2] hover:text-[#004182]">Upload CV ngay</Link>
+      </div>
     </div>
   );
 }

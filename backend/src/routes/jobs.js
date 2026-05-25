@@ -31,8 +31,20 @@ const upload = multer({
 // ─── GET /api/jobs/:id ───────────────────────────
 router.get('/:id', async (req, res, next) => {
   try {
+    const jobId = parseInt(req.params.id);
+    if (isNaN(jobId)) {
+      // Return a mock response for frontend mock jobs (e.g., 'j26')
+      return res.json({
+        job: {
+          id: req.params.id,
+          title: 'Việc làm IT (Mock Data)',
+          is_bookmarked: false,
+        },
+      });
+    }
+
     const job = await db('jobs')
-      .where({ id: req.params.id, is_active: true })
+      .where({ id: jobId, is_active: true })
       .first();
 
     if (!job) {
@@ -62,6 +74,10 @@ router.post('/:id/bookmark', async (req, res, next) => {
     const jobId = parseInt(req.params.id);
     const userId = req.user.id;
 
+    if (isNaN(jobId)) {
+      return res.json({ is_bookmarked: true, message: 'Mock job bookmarked' });
+    }
+
     // Check if already bookmarked
     const existing = await db('bookmarks')
       .where({ user_id: userId, job_id: jobId })
@@ -86,6 +102,13 @@ router.post('/:id/bookmark', async (req, res, next) => {
 router.post('/:id/apply', async (req, res, next) => {
   try {
     const jobId = parseInt(req.params.id);
+
+    if (isNaN(jobId)) {
+      return res.json({
+        message: 'Mock application recorded',
+        job_url: '#',
+      });
+    }
 
     const job = await db('jobs').where({ id: jobId }).first();
     if (!job) {
@@ -116,6 +139,20 @@ router.post('/:id/apply', async (req, res, next) => {
 router.post('/:id/apply-cv', upload.single('cv_file'), async (req, res, next) => {
   try {
     const jobId = parseInt(req.params.id);
+    
+    if (isNaN(jobId)) {
+       return res.json({
+        job_id: req.params.id,
+        job_title: 'Việc làm IT Nổi bật',
+        company_name: 'Tập đoàn Công nghệ',
+        match_score: 95,
+        cv_skills: ['React', 'NodeJS', 'AI'],
+        matched_skills: ['React', 'NodeJS'],
+        missing_skills: ['Python'],
+        ai_available: true,
+        message: 'Mock AI Match thành công!'
+      });
+    }
 
     // 1. Get job details (need description + skills for matching)
     const job = await db('jobs')

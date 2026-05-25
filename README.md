@@ -1,8 +1,8 @@
-# 💼 Job Recommender System — AI-Powered Job Matching
+# Job Recommender System — AI-Powered Job Matching
 
 > Hệ thống gợi ý việc làm thông minh sử dụng SBERT + Vector Search (Milvus)
 
-## 🏗️ Kiến trúc hệ thống
+## Kiến trúc hệ thống
 
 Hệ thống cung cấp 2 giao diện người dùng:
 1. **React Frontend**: Giao diện chính với đầy đủ chức năng.
@@ -28,7 +28,7 @@ Hệ thống cung cấp 2 giao diện người dùng:
 └─────────────────────┘
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Khởi động Database
 ```bash
@@ -77,7 +77,7 @@ npm run dev
 streamlit run streamlit_app.py
 ```
 
-## 📋 Tech Stack
+## Tech Stack
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
@@ -89,7 +89,7 @@ streamlit run streamlit_app.py
 | Database | PostgreSQL | Users, CVs, Jobs, Tracking |
 | UI | Framer Motion + Lucide | Animations + Icons |
 
-## 📁 Cấu trúc thư mục
+## Cấu trúc thư mục
 
 ```
 Job_Recommender_System/
@@ -108,7 +108,7 @@ Job_Recommender_System/
 └── .env                       # Environment variables
 ```
 
-## 🔗 API Endpoints
+## API Endpoints
 
 ### Node.js Backend (Port 3000)
 | Method | Endpoint | Description |

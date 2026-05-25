@@ -15,6 +15,7 @@ import {
 import axios from 'axios';
 import CompanyLogo from '../../components/cards/CompanyLogo';
 import ApplyModal from '../../components/modals/ApplyModal';
+import { companies as mockCompanies, jobs as mockJobs } from '../../data/mockData';
 
 // ─── Why Choose Us reasons (per company or generic) ──────────────
 const WHY_US_ITEMS = [
@@ -250,22 +251,15 @@ export default function CompanyDetailsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        setLoading(true);
-        const [companyRes, jobsRes] = await Promise.all([
-          axios.get(`http://localhost:3000/api/companies/${id}`, { withCredentials: true }),
-          axios.get(`http://localhost:3000/api/companies/${id}/jobs`, { withCredentials: true }),
-        ]);
-        setCompany(companyRes.data);
-        setJobs(jobsRes.data.jobs || []);
-      } catch (error) {
-        console.error('Failed to fetch company details', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDetails();
+    // Simulate network delay for smooth UI transition
+    setLoading(true);
+    setTimeout(() => {
+      const foundCompany = mockCompanies.find(c => c.id === id);
+      const foundJobs = mockJobs.filter(j => j.companyId === id);
+      setCompany(foundCompany || null);
+      setJobs(foundJobs || []);
+      setLoading(false);
+    }, 500);
   }, [id]);
 
   if (loading) {
@@ -383,13 +377,13 @@ export default function CompanyDetailsPage() {
             </div>
 
             {/* Description */}
-            {company.description && (
+            {(company.fullDescription || company.description) && (
               <div className="mt-6 pt-6" style={{ borderTop: '1px solid var(--border-divider)' }}>
                 <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
                   Giới thiệu
                 </h2>
                 <p className="text-sm leading-relaxed max-w-3xl" style={{ color: 'var(--text-secondary)' }}>
-                  {company.description}
+                  {company.fullDescription || company.description}
                 </p>
               </div>
             )}
@@ -413,27 +407,31 @@ export default function CompanyDetailsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {WHY_US_ITEMS.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + i * 0.07 }}
-                className="glass-card p-5 group hover:border-primary-500/30 transition-all duration-300"
-              >
-                <div
-                  className={`w-11 h-11 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}
+            {(company.reasonsToJoin || WHY_US_ITEMS).map((item, i) => {
+              const Icon = item.icon || WHY_US_ITEMS[i % WHY_US_ITEMS.length].icon;
+              const bgClass = item.color || WHY_US_ITEMS[i % WHY_US_ITEMS.length].color;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 + i * 0.07 }}
+                  className="glass-card p-5 group hover:border-primary-500/30 transition-all duration-300"
                 >
-                  <item.icon size={20} className="text-white" />
-                </div>
-                <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
-                  {item.title}
-                </h3>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
+                  <div
+                    className={`w-11 h-11 rounded-xl bg-gradient-to-br ${bgClass} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}
+                  >
+                    <Icon size={20} className="text-white" />
+                  </div>
+                  <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+                    {item.title}
+                  </h3>
+                  <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    {item.desc}
+                  </p>
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
 
