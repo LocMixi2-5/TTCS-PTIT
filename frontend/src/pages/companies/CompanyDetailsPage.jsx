@@ -63,9 +63,17 @@ function JobDetailCard({ job, index }) {
       className="glass-card overflow-hidden"
     >
       {/* Card Header */}
-      <button
-        className="w-full p-5 flex items-start gap-4 text-left group"
+      <div
+        className="w-full p-5 flex items-start gap-4 text-left group cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+          }
+        }}
+        role="button"
+        tabIndex={0}
         id={`job-card-toggle-${job.id}`}
       >
         {/* Rank */}
@@ -129,7 +137,7 @@ function JobDetailCard({ job, index }) {
             {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
         </div>
-      </button>
+      </div>
 
       {/* Expanded Detail */}
       <AnimatePresence>
@@ -382,9 +390,6 @@ export default function CompanyDetailsPage() {
               </div>
 
               <div className="flex gap-2">
-                <button className="btn-ghost text-sm flex items-center gap-1.5">
-                  <Star size={14} /> Theo dõi
-                </button>
                 {company.website && (
                   <a
                     href={company.website}

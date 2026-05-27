@@ -236,11 +236,12 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
               <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredJobs.length > 0 ? (
-                  filteredJobs.map(job => (
+                  filteredJobs.map((job, index) => (
                     <SuperHotJobCard 
                       key={job.id} 
                       job={job} 
                       company={getCompany(job)} 
+                      index={index}
                     />
                   ))
                 ) : (

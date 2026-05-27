@@ -20,6 +20,19 @@ const router = express.Router();
 // Valid event types (whitelist)
 const VALID_EVENT_TYPES = ['CLICK', 'DWELL_TIME', 'BOOKMARK', 'APPLY', 'DISMISS', 'SEARCH'];
 
+// ─── Auto-Cleanup (For Testing) ──────────────────
+// Automatically delete tracking events older than 2 minutes
+setInterval(async () => {
+  try {
+    // Xóa các event mà client_timestamp cũ hơn 2 phút so với hiện tại
+    await db('user_tracking_events')
+      .whereRaw("client_timestamp < NOW() - INTERVAL '2 minutes'")
+      .del();
+  } catch (err) {
+    console.error('Failed to cleanup tracking events:', err.message);
+  }
+}, 60000); // Check every 60 seconds
+
 // ─── POST /api/tracking/events ───────────────────
 // Receives a batch of events from the frontend SDK
 router.post('/events', authenticateToken, async (req, res, next) => {
@@ -46,14 +59,23 @@ router.post('/events', authenticateToken, async (req, res, next) => {
     }
 
     // Batch insert
-    const rows = validEvents.map((event) => ({
-      user_id: userId,
-      session_id: event.session_id,
-      event_type: event.event_type,
-      job_id: event.payload?.job_id || null,
-      payload: JSON.stringify(event.payload || {}),
-      client_timestamp: event.timestamp || new Date(),
-    }));
+    const rows = validEvents.map((event) => {
+      let jobId = event.payload?.job_id;
+      // Xử lý an toàn: Nếu jobId là chuỗi mock data (ví dụ 'j1', 'j2') thì đặt thành null
+      // để PostgreSQL không bị lỗi type integer. Payload JSON vẫn giữ nguyên jobId gốc.
+      if (jobId && isNaN(Number(jobId))) {
+        jobId = null;
+      }
+
+      return {
+        user_id: userId,
+        session_id: event.session_id,
+        event_type: event.event_type,
+        job_id: jobId,
+        payload: JSON.stringify(event.payload || {}),
+        client_timestamp: event.timestamp || new Date(),
+      };
+    });
 
     await db('user_tracking_events').insert(rows);
 

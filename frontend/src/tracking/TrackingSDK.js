@@ -29,7 +29,15 @@ class JobTrackingSDK {
   _getOrCreateSession() {
     let sid = sessionStorage.getItem('tracking_session_id');
     if (!sid) {
-      sid = crypto.randomUUID();
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        sid = crypto.randomUUID();
+      } else {
+        // Fallback valid UUID v4 generator for Postgres
+        sid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      }
       sessionStorage.setItem('tracking_session_id', sid);
     }
     return sid;
@@ -94,26 +102,34 @@ class JobTrackingSDK {
 
   // ═══ INTERNAL ═════════════════════════════════
   _pushEvent(eventType, payload) {
-    this.eventBuffer.push({
+    const event = {
       event_type: eventType,
       session_id: this.sessionId,
       timestamp: new Date().toISOString(),
       payload,
-    });
+    };
+    this.eventBuffer.push(event);
+    console.log(`[TrackingSDK] Đã ghi nhận sự kiện: ${eventType}`, payload);
   }
 
   async flush() {
     if (this.eventBuffer.length === 0) return;
 
-    const events = [...this.eventBuffer];
-    this.eventBuffer = [];
+    // Cắt tối đa 100 sự kiện để gửi, tránh bị Backend từ chối vì quá tải
+    const eventsToSend = this.eventBuffer.splice(0, 100);
+    console.log(`[TrackingSDK] Đang gửi ${eventsToSend.length} sự kiện lên Server...`, eventsToSend);
 
     try {
-      await trackingAPI.sendEvents(events);
+      await trackingAPI.sendEvents(eventsToSend);
+      console.log(`[TrackingSDK] ✅ Gửi thành công ${eventsToSend.length} sự kiện.`);
     } catch (err) {
-      // Put events back on failure
-      this.eventBuffer.unshift(...events);
-      console.warn('Tracking flush failed:', err);
+      console.error(`[TrackingSDK] ❌ Lỗi gửi dữ liệu:`, err.response?.data || err.message);
+      // Chỉ đẩy lại vào hàng chờ nếu lỗi Mạng hoặc Server (5xx). 
+      // Bỏ qua nếu là lỗi 4xx (như 400 Bad Request, 401 Unauthorized) để tránh vòng lặp vô tận
+      if (!err.response || err.response.status >= 500) {
+        this.eventBuffer.unshift(...eventsToSend);
+        console.log(`[TrackingSDK] 🔄 Đã nhét lại ${eventsToSend.length} sự kiện vào hàng đợi.`);
+      }
     }
   }
 

@@ -1,8 +1,9 @@
 import { MapPin, DollarSign, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import CompanyLogo from '../cards/CompanyLogo';
+import { useJobTracking, useJobDwellTime } from '../../hooks/useJobTracking';
 
-export default function SuperHotJobCard({ job, company }) {
+export default function SuperHotJobCard({ job, company, index }) {
   const [showSalary, setShowSalary] = useState(false);
   const [isApplied, setIsApplied] = useState(false);
 
@@ -15,8 +16,14 @@ export default function SuperHotJobCard({ job, company }) {
   const tags = job.tags || job.required_skills || [];
   const salary = job.salary || job.salary_range || 'Thương lượng';
 
+  // ─── Tracking SDK Integration ───
+  const { trackClick, trackApply } = useJobTracking();
+  useJobDwellTime(job.id, true); // Auto track dwell time when card mounts
+
   return (
-    <div className={`w-full bg-white rounded-lg shadow-sm border transition-all relative p-5 flex flex-col h-full group ${
+    <div 
+      onClick={() => trackClick(job.id, index, { matchScore: job.matchScore })}
+      className={`w-full bg-white rounded-lg shadow-sm border transition-all relative p-5 flex flex-col h-full group cursor-pointer ${
       hasMatchScore
         ? (isHighMatch ? 'border-[#38bdf8]/30 hover:border-[#38bdf8]' : 'border-gray-200 hover:border-[#0a66c2]')
         : 'border-gray-200 hover:border-[#0a66c2]'
@@ -86,7 +93,11 @@ export default function SuperHotJobCard({ job, company }) {
       {/* Apply Button */}
       <div className="mt-auto pt-5">
         <button 
-          onClick={() => setIsApplied(true)}
+          onClick={(e) => {
+            e.stopPropagation(); // Ngăn sự kiện click sủi bọt ra ngoài thẻ div
+            setIsApplied(true);
+            trackApply(job.id, { appliedVia: 'landing_page_card' });
+          }}
           disabled={isApplied}
           className={`block w-full text-center py-2.5 rounded-md font-bold transition-all text-sm uppercase tracking-wide border flex items-center justify-center gap-2 ${
             isApplied 
