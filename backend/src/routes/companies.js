@@ -44,7 +44,11 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/jobs', async (req, res) => {
   try {
     const jobs = await db('jobs')
-      .select('id', 'title', 'company_name', 'location', 'experience_level', 'salary_range', 'is_active')
+      .select(
+        'id', 'title', 'company_name', 'location', 
+        'experience_level', 'salary_range', 'is_active',
+        'description', 'skills_desc', 'required_skills'
+      )
       .where('company_id', req.params.id)
       .where('is_active', true)
       .orderBy('created_at', 'desc');

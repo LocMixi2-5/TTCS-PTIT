@@ -1,4 +1,37 @@
+// ═══════════════════════════════════════════════════
+// CompanyLogo — Reusable company logo with initials
+// Luôn hiển thị 2 chữ cái đặc trưng với màu nền của công ty
+// ═══════════════════════════════════════════════════
 import { Building2 } from 'lucide-react';
+import { companies as mockCompanies } from '../../data/mockData';
+
+export function getCompanyTheme(company) {
+  const name = company?.name || company?.company_name || '';
+  
+  const mockCompany = mockCompanies.find(
+    c => c.id === company?.id || c.name.toLowerCase() === name.toLowerCase()
+  );
+
+  const shortName = mockCompany?.shortName || company?.shortName || '';
+  const themeColor = mockCompany?.themeColor || company?.themeColor;
+
+  const initials = shortName || name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() || '')
+    .join('');
+
+  let styleProps = {};
+  const hue = (name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) * 47) % 360;
+  
+  if (themeColor) {
+    styleProps = { backgroundColor: themeColor };
+  } else {
+    styleProps = { background: `linear-gradient(135deg, hsl(${hue},70%,45%), hsl(${(hue + 40) % 360},80%,60%))` };
+  }
+
+  return { initials, styleProps, themeColor: themeColor || `hsl(${hue},70%,45%)` };
+}
 
 export default function CompanyLogo({
   company,
@@ -7,20 +40,14 @@ export default function CompanyLogo({
   fallbackClassName = '',
 }) {
   const name = company?.name || company?.company_name || '';
-  const shortName = company?.shortName || '';
-  const themeColor = company?.themeColor || '#4f46e5';
-
-  // Lấy initials: Dùng shortName nếu có, nếu không lấy 2 chữ cái đầu của tên
-  const initials = shortName || name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() || '')
-    .join('');
+  
+  // Lấy style và thông tin từ helper
+  const { initials, styleProps } = getCompanyTheme(company);
 
   if (initials) {
     return (
       <div
-        className={`flex items-center justify-center font-bold select-none overflow-hidden ${fallbackClassName} ${className}`}
+        className={`flex items-center justify-center rounded-2xl font-bold select-none ${fallbackClassName} ${className}`}
         style={{
           width: size,
           height: size,
@@ -28,8 +55,9 @@ export default function CompanyLogo({
           color: '#fff',
           flexShrink: 0,
           letterSpacing: '0.02em',
-          backgroundColor: themeColor,
-          border: '1px solid rgba(0,0,0,0.05)',
+          ...styleProps,
+          border: '1px solid rgba(255,255,255,0.15)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
         }}
       >
         {initials}
@@ -37,15 +65,14 @@ export default function CompanyLogo({
     );
   }
 
-  // Fallback nếu không có tên
   return (
     <div
-      className={`flex items-center justify-center overflow-hidden ${fallbackClassName} ${className}`}
+      className={`flex items-center justify-center rounded-2xl ${fallbackClassName} ${className}`}
       style={{
         width: size,
         height: size,
-        backgroundColor: themeColor,
-        border: '1px solid rgba(0,0,0,0.05)',
+        ...styleProps,
+        border: '1px solid rgba(255,255,255,0.15)',
         flexShrink: 0,
       }}
     >

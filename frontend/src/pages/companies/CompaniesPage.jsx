@@ -3,28 +3,26 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, ChevronRight, Loader2 } from 'lucide-react';
 import CompanyLogo from '../../components/cards/CompanyLogo';
-import { companies as mockCompanies, jobs as mockJobs } from '../../data/mockData';
+
+import { companiesAPI } from '../../services/api';
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const fetchCompanies = (query = '') => {
+  const fetchCompanies = async (query = '') => {
     setLoading(true);
-    setTimeout(() => {
-      let result = mockCompanies;
-      if (query) {
-        result = result.filter(c => c.name.toLowerCase().includes(query.toLowerCase()));
-      }
-      // Add job counts manually for the list view
-      const enrichedResult = result.map(c => ({
-        ...c,
-        job_count: mockJobs.filter(j => j.companyId === c.id).length
-      }));
-      setCompanies(enrichedResult);
+    try {
+      const { data } = await companiesAPI.list(query ? { q: query } : {});
+      setCompanies(data);
+    } catch (err) {
+      console.error('Error fetching companies:', err);
+      // Fallback to empty if fails
+      setCompanies([]);
+    } finally {
       setLoading(false);
-    }, 400);
+    }
   };
 
   useEffect(() => { fetchCompanies(); }, []);
@@ -69,7 +67,7 @@ export default function CompaniesPage() {
                 Search
               </button>
             </form>
-            <span className="text-blue-200 text-sm">{mockJobs.length} Việc làm IT tại Việt Nam</span>
+            <span className="text-blue-200 text-sm">{companies.reduce((sum, c) => sum + Number(c.job_count || 0), 0)} Việc làm IT tại Việt Nam</span>
           </div>
         </div>
 

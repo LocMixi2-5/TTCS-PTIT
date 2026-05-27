@@ -1,9 +1,11 @@
 import { ArrowRight, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import CompanyLogo from '../cards/CompanyLogo';
+import CompanyLogo, { getCompanyTheme } from '../cards/CompanyLogo';
 
 export default function CompanySpotlight({ company, featuredJobs = [], isSelected, onClick }) {
   if (!company) return null;
+
+  const { themeColor } = getCompanyTheme(company);
 
   return (
     <div 
@@ -20,7 +22,10 @@ export default function CompanySpotlight({ company, featuredJobs = [], isSelecte
 
       {/* Center: Info */}
       <div className="flex-1 flex flex-col justify-center">
-        <h2 className={`text-xl font-bold mb-2 transition-colors ${isSelected ? 'text-[#0a66c2]' : 'text-[#002d5c] group-hover:text-[#0a66c2]'}`}>
+        <h2 
+          className="text-xl font-bold mb-2 transition-colors opacity-90 group-hover:opacity-100"
+          style={{ color: themeColor }}
+        >
           {company.name}
         </h2>
         <div className="flex items-center gap-2 text-gray-500 text-sm mb-4">

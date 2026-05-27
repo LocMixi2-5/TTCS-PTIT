@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════
 // Jobs Routes — Browse and interact with job postings
 //
+// GET  /api/jobs/feed         — Job feed with match scores from latest CV
 // GET  /api/jobs/:id          — Get job details
 // POST /api/jobs/:id/bookmark — Toggle bookmark
 // POST /api/jobs/:id/apply    — Record application (tracking only)
@@ -13,9 +14,109 @@ const fs = require('fs');
 const FormData = require('form-data');
 const axios = require('axios');
 const db = require('../config/database');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
+
+// ─── GET /api/jobs/feed ──────────────────────────
+// Public route (optionalAuth): returns active jobs.
+// If user is logged in & has a completed CV, includes
+// match_score from the most recent CV's recommendations.
+// If no CV → match_score is null for all jobs.
+router.get('/feed', optionalAuth, async (req, res, next) => {
+  try {
+    let latestCv = null;
+
+    // If authenticated, find the user's latest completed CV
+    if (req.user) {
+      latestCv = await db('cvs')
+        .where({ user_id: req.user.id, processing_status: 'completed' })
+        .orderBy('created_at', 'desc')
+        .first();
+    }
+
+    // Build jobs query with optional match scores
+    let query;
+
+    if (latestCv) {
+      // JOIN with recommendations from latest CV
+      query = db('jobs as j')
+        .leftJoin('recommendations as r', function () {
+          this.on('j.id', 'r.job_id').andOn('r.cv_id', db.raw('?', [latestCv.id]));
+        })
+        .leftJoin('companies as c', 'j.company_id', 'c.id')
+        .where('j.is_active', true)
+        .select(
+          'j.id',
+          'j.title',
+          'j.description',
+          'j.skills_desc',
+          'j.required_skills',
+          'j.experience_level',
+          'j.location',
+          'j.company_name',
+          'j.salary_range',
+          'j.company_id',
+          'c.name as company_display_name',
+          'c.logo_url',
+          'r.match_score',
+          'r.matched_skills',
+          'r.rank_position',
+          'j.created_at'
+        )
+        .orderByRaw('r.match_score DESC NULLS LAST, j.created_at DESC');
+    } else {
+      // No CV — return jobs without match scores
+      query = db('jobs as j')
+        .leftJoin('companies as c', 'j.company_id', 'c.id')
+        .where('j.is_active', true)
+        .select(
+          'j.id',
+          'j.title',
+          'j.description',
+          'j.skills_desc',
+          'j.required_skills',
+          'j.experience_level',
+          'j.location',
+          'j.company_name',
+          'j.salary_range',
+          'j.company_id',
+          'c.name as company_display_name',
+          'c.logo_url',
+          db.raw('NULL as match_score'),
+          db.raw('NULL as matched_skills'),
+          db.raw('NULL as rank_position')
+        )
+        .orderBy('j.created_at', 'desc');
+    }
+
+    const jobs = await query;
+
+    res.json({
+      jobs: jobs.map((j) => ({
+        id: j.id,
+        title: j.title,
+        description: j.description ? j.description.substring(0, 300) : '',
+        required_skills: j.required_skills || [],
+        experience_level: j.experience_level,
+        location: j.location,
+        company_name: j.company_display_name || j.company_name,
+        salary_range: j.salary_range,
+        company_id: j.company_id,
+        logo_url: j.logo_url,
+        match_score: j.match_score ? parseFloat(j.match_score) : null,
+        matched_skills: j.matched_skills || [],
+      })),
+      total: jobs.length,
+      cv_id: latestCv ? latestCv.id : null,
+      has_cv: !!latestCv,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// All remaining routes require authentication
 router.use(authenticateToken);
 
 // ─── Multer for CV upload (temp, not saved to disk) ─

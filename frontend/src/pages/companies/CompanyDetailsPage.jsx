@@ -13,7 +13,7 @@ import {
   BookOpen, Code2, Coffee, Laptop, Send,
 } from 'lucide-react';
 import axios from 'axios';
-import CompanyLogo from '../../components/cards/CompanyLogo';
+import CompanyLogo, { getCompanyTheme } from '../../components/cards/CompanyLogo';
 import ApplyModal from '../../components/modals/ApplyModal';
 import { companies as mockCompanies, jobs as mockJobs } from '../../data/mockData';
 
@@ -241,6 +241,8 @@ function JobDetailCard({ job, index }) {
   </>);
 }
 
+import { companiesAPI } from '../../services/api';
+
 // ═══════════════════════════════════════════════════
 // Main Page
 // ═══════════════════════════════════════════════════
@@ -251,15 +253,33 @@ export default function CompanyDetailsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate network delay for smooth UI transition
-    setLoading(true);
-    setTimeout(() => {
-      const foundCompany = mockCompanies.find(c => c.id === id);
-      const foundJobs = mockJobs.filter(j => j.companyId === id);
-      setCompany(foundCompany || null);
-      setJobs(foundJobs || []);
-      setLoading(false);
-    }, 500);
+    const fetchCompanyData = async () => {
+      setLoading(true);
+      try {
+        const [compRes, jobsRes] = await Promise.all([
+          companiesAPI.getById(id),
+          companiesAPI.getJobs(id)
+        ]);
+        setCompany(compRes.data);
+        
+        // Ensure required_skills array is parsed if it's a string from db
+        const parsedJobs = jobsRes.data.jobs.map(j => ({
+          ...j,
+          required_skills: typeof j.required_skills === 'string' 
+            ? j.required_skills.replace(/[{}]/g, '').split(',').map(s => s.trim()) 
+            : (j.required_skills || [])
+        }));
+        
+        setJobs(parsedJobs);
+      } catch (err) {
+        console.error('Error fetching company info:', err);
+        setCompany(null);
+        setJobs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCompanyData();
   }, [id]);
 
   if (loading) {
@@ -289,6 +309,8 @@ export default function CompanyDetailsPage() {
     );
   }
 
+  const { themeColor } = getCompanyTheme(company);
+
   return (
     <div className="min-h-screen pt-24 pb-16 px-4">
       <div className="ambient-bg" />
@@ -314,7 +336,7 @@ export default function CompanyDetailsPage() {
           <div
             className="h-40 relative"
             style={{
-              background: 'linear-gradient(135deg, rgba(99,102,241,0.40) 0%, rgba(20,184,166,0.28) 50%, rgba(167,139,250,0.20) 100%)',
+              background: `linear-gradient(135deg, ${themeColor}40 0%, rgba(20,184,166,0.28) 50%, rgba(167,139,250,0.20) 100%)`,
             }}
           >
             {/* Decorative circles */}
@@ -328,7 +350,7 @@ export default function CompanyDetailsPage() {
 
             <div className="mt-5 flex flex-col md:flex-row md:items-start justify-between gap-5">
               <div className="flex-1">
-                <h1 className="text-3xl font-display font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                <h1 className="text-3xl font-display font-bold mb-2" style={{ color: themeColor }}>
                   {company.name}
                 </h1>
                 <div className="flex flex-wrap gap-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -401,7 +423,7 @@ export default function CompanyDetailsPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
               <Star size={16} className="text-white" />
             </div>
-            <h2 className="text-2xl font-display font-bold" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="text-2xl font-display font-bold" style={{ color: themeColor }}>
               Lý do chọn {company.name}
             </h2>
           </div>
