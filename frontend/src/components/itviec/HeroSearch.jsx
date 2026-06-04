@@ -1,13 +1,30 @@
 import { MapPin, Search, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { jobsAPI } from '../../services/api';
+import { useJobTracking } from '../../hooks/useJobTracking';
 
 export default function HeroSearch({ onSearch }) {
   const [keyword, setKeyword] = useState('');
   const [city, setCity] = useState('');
+  const [suggestions, setSuggestions] = useState(['React', 'Java', 'Python', 'AWS']);
   const navigate = useNavigate();
+  const { trackSearch } = useJobTracking();
+
+  useEffect(() => {
+    jobsAPI.getSuggestions()
+      .then(res => {
+        if (res.data && res.data.suggestions) {
+          setSuggestions(res.data.suggestions);
+        }
+      })
+      .catch(err => console.error('Failed to fetch suggestions:', err));
+  }, []);
 
   const handleSearch = () => {
+    if (keyword.trim() || city.trim()) {
+      trackSearch(keyword, { city });
+    }
     if (onSearch) {
       onSearch({ keyword, city });
     }
@@ -15,6 +32,7 @@ export default function HeroSearch({ onSearch }) {
 
   const handleSuggestionClick = (suggestion) => {
     setKeyword(suggestion);
+    trackSearch(suggestion, { city, source: 'suggestion' });
     if (onSearch) {
       onSearch({ keyword: suggestion, city });
     }
@@ -87,10 +105,15 @@ export default function HeroSearch({ onSearch }) {
         {/* Popular Keywords */}
         <div className="mt-6 flex flex-wrap justify-center gap-2 text-sm text-blue-100">
           <span>Gợi ý:</span>
-          <button onClick={() => handleSuggestionClick('React')} className="hover:text-white underline decoration-white/30 underline-offset-4">React</button>
-          <button onClick={() => handleSuggestionClick('Java')} className="hover:text-white underline decoration-white/30 underline-offset-4">Java</button>
-          <button onClick={() => handleSuggestionClick('Python')} className="hover:text-white underline decoration-white/30 underline-offset-4">Python</button>
-          <button onClick={() => handleSuggestionClick('AWS')} className="hover:text-white underline decoration-white/30 underline-offset-4">AWS</button>
+          {suggestions.map((suggestion, index) => (
+            <button 
+              key={index} 
+              onClick={() => handleSuggestionClick(suggestion)} 
+              className="hover:text-white underline decoration-white/30 underline-offset-4"
+            >
+              {suggestion}
+            </button>
+          ))}
         </div>
       </div>
     </section>

@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════
 // Results Page — AI Recommendations with Explainable AI
 // ═══════════════════════════════════════════════════
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -53,8 +53,9 @@ function JobCard({ rec, cvSkills, rank }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(rec.is_bookmarked);
   const [applyOpen, setApplyOpen] = useState(false);
+  const cardRef = useRef(null);
   const { trackClick, trackBookmark, trackApply } = useJobTracking();
-  useJobDwellTime(rec.job.id, isExpanded);
+  useJobDwellTime(rec.job.id, cardRef);
 
   const job = rec.job;
   const matchScore = rec.match_score;
@@ -93,6 +94,7 @@ function JobCard({ rec, cvSkills, rank }) {
 
   return (<>
     <motion.div
+      ref={cardRef}
       layout
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}

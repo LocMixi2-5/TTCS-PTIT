@@ -65,6 +65,7 @@ export const recommendationsAPI = {
 // ─── Jobs API ────────────────────────────────────
 export const jobsAPI = {
   getFeed: () => api.get('/api/jobs/feed'),
+  getSuggestions: () => api.get('/api/jobs/suggestions'),
   getById: (id) => api.get(`/api/jobs/${id}`),
   toggleBookmark: (id) => api.post(`/api/jobs/${id}/bookmark`),
   recordApply: (id, data = {}) => api.post(`/api/jobs/${id}/apply`, data),
@@ -81,6 +82,7 @@ export const jobsAPI = {
 // ─── Tracking API ────────────────────────────────
 export const trackingAPI = {
   sendEvents: (events) => api.post('/api/tracking/events', { events }),
+  getStats: () => api.get('/api/tracking/stats'),
 };
 
 // ─── Companies API ───────────────────────────────

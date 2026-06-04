@@ -1,9 +1,9 @@
-import { MapPin, DollarSign, CheckCircle } from 'lucide-react';
+import { MapPin, DollarSign, CheckCircle, Zap } from 'lucide-react';
 import { useState } from 'react';
 import CompanyLogo from '../cards/CompanyLogo';
-import { useJobTracking, useJobDwellTime } from '../../hooks/useJobTracking';
+import { useJobTracking } from '../../hooks/useJobTracking';
 
-export default function SuperHotJobCard({ job, company, index }) {
+export default function SuperHotJobCard({ job, company, index, onJobClick }) {
   const [showSalary, setShowSalary] = useState(false);
   const [isApplied, setIsApplied] = useState(false);
 
@@ -11,22 +11,30 @@ export default function SuperHotJobCard({ job, company, index }) {
 
   const hasMatchScore = job.matchScore != null;
   const isHighMatch = hasMatchScore && job.matchScore >= 85;
+  
+  // Kiểm tra xem job này có đang được boost bởi tracking không (affinityScore hoặc popScore > 0)
+  const isTrackingBoosted = (job.affinityScore > 0) || (job.popScore > 0);
 
   // Tags come from mock data (job.tags) or API data (job.required_skills)
   const tags = job.tags || job.required_skills || [];
   const salary = job.salary || job.salary_range || 'Thương lượng';
 
   // ─── Tracking SDK Integration ───
+  // Chỉ track CLICK — dwell time chỉ được track khi user mở JobDetailModal
   const { trackClick, trackApply } = useJobTracking();
-  useJobDwellTime(job.id, true); // Auto track dwell time when card mounts
 
   return (
-    <div 
-      onClick={() => trackClick(job.id, index, { matchScore: job.matchScore })}
-      className={`w-full bg-white rounded-lg shadow-sm border transition-all relative p-5 flex flex-col h-full group cursor-pointer ${
-      hasMatchScore
-        ? (isHighMatch ? 'border-[#38bdf8]/30 hover:border-[#38bdf8]' : 'border-gray-200 hover:border-[#0a66c2]')
-        : 'border-gray-200 hover:border-[#0a66c2]'
+    <div
+      onClick={() => {
+        trackClick(job.id, index, { matchScore: job.matchScore });
+        if (onJobClick) onJobClick(job);
+      }}
+      className={`w-full rounded-lg shadow-sm border transition-all relative p-5 flex flex-col h-full group cursor-pointer ${
+      isTrackingBoosted
+        ? 'bg-purple-50/40 border-purple-300 hover:border-purple-500 hover:shadow-md hover:shadow-purple-200/50'
+        : hasMatchScore
+          ? (isHighMatch ? 'bg-white border-[#38bdf8]/30 hover:border-[#38bdf8]' : 'bg-white border-gray-200 hover:border-[#0a66c2]')
+          : 'bg-white border-gray-200 hover:border-[#0a66c2]'
     }`}>
       
       {/* AI Match Score Badge — only show when user has uploaded a CV */}
@@ -62,7 +70,7 @@ export default function SuperHotJobCard({ job, company, index }) {
               <DollarSign size={16} className="text-[#0a66c2] shrink-0" />
               {!showSalary ? (
                 <button 
-                  onClick={() => setShowSalary(true)}
+                  onClick={(e) => { e.stopPropagation(); setShowSalary(true); }}
                   className="text-[#002d5c] font-semibold bg-[#e8f3ff] px-2 py-0.5 rounded cursor-pointer hover:bg-blue-100 transition-colors"
                 >
                   Click để xem mức lương
@@ -89,6 +97,14 @@ export default function SuperHotJobCard({ job, company, index }) {
           </span>
         ))}
       </div>
+
+      {/* Tracking Info Badge */}
+      {isTrackingBoosted && (
+        <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-100 p-2 rounded-md border border-purple-200">
+           <Zap size={14} className="fill-purple-600 text-purple-600" />
+           <span>Gợi ý từ hoạt động của bạn (Tương tác: {job.affinityScore})</span>
+        </div>
+      )}
 
       {/* Apply Button */}
       <div className="mt-auto pt-5">

@@ -36,9 +36,28 @@ router.get('/:cvId', async (req, res, next) => {
       });
     }
 
-    // 2. Build query for recommendations + job details
-    let query = db('recommendations as r')
+    // 2. Build query for recommendations + job details with implicit feedback
+    let query = db.with('job_popularity', db.raw(`
+      SELECT job_id, COUNT(*) as pop_score 
+      FROM user_tracking_events 
+      GROUP BY job_id
+    `)).with('user_affinity', db.raw(`
+      SELECT job_id, 
+        SUM(CASE 
+          WHEN event_type = 'APPLY' THEN 15
+          WHEN event_type = 'BOOKMARK' THEN 10
+          WHEN event_type = 'DWELL_TIME' THEN 2
+          WHEN event_type = 'CLICK' THEN 1
+          ELSE 0 
+        END) as affinity_score
+      FROM user_tracking_events
+      WHERE user_id = ?
+      GROUP BY job_id
+    `, [req.user.id]))
+      .from('recommendations as r')
       .join('jobs as j', 'r.job_id', 'j.id')
+      .leftJoin('job_popularity as jp', 'j.id', 'jp.job_id')
+      .leftJoin('user_affinity as ua', 'j.id', 'ua.job_id')
       .where('r.cv_id', cvId)
       .select(
         'r.id as recommendation_id',
@@ -54,10 +73,16 @@ router.get('/:cvId', async (req, res, next) => {
         'j.location',
         'j.company_name',
         'j.salary_range',
-        'j.job_url'
+        'j.job_url',
+        'jp.pop_score',
+        'ua.affinity_score'
       )
-      .orderBy('r.rank_position', 'asc');
-
+      .orderByRaw(`
+        (COALESCE(r.match_score, 0) * 0.7) + 
+        (LEAST(COALESCE(jp.pop_score, 0), 50) * 0.1) + 
+        (LEAST(COALESCE(ua.affinity_score, 0), 100) * 0.2) DESC NULLS LAST,
+        r.rank_position ASC
+      `);
     // 3. Apply optional filters
     if (min_score) {
       query = query.where('r.match_score', '>=', parseFloat(min_score));
@@ -80,12 +105,14 @@ router.get('/:cvId', async (req, res, next) => {
     const bookmarkedJobIds = new Set(bookmarks.map(b => b.job_id));
 
     // 5. Format response
-    const results = recommendations.map((r) => ({
+    const results = recommendations.map((r, idx) => ({
       recommendation_id: r.recommendation_id,
-      rank: r.rank_position,
+      rank: idx + 1, // Recalculate rank after sorting
       match_score: parseFloat(r.match_score),
       matched_skills: r.matched_skills || [],
       is_bookmarked: bookmarkedJobIds.has(r.job_id),
+      pop_score: parseInt(r.pop_score || 0),
+      affinity_score: parseFloat(r.affinity_score || 0),
       job: {
         id: r.job_id,
         title: r.title,

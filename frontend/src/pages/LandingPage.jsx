@@ -1,9 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import HeroSearch from '../components/itviec/HeroSearch';
 import CompanySpotlight from '../components/itviec/CompanySpotlight';
 import JobListingHeader from '../components/itviec/JobListingHeader';
 import SuperHotJobCard from '../components/itviec/SuperHotJobCard';
+import JobDetailModal from '../components/itviec/JobDetailModal';
+import TrackingInsightsPanel from '../components/itviec/TrackingInsightsPanel';
 import { companies as mockCompanies, jobs as mockJobs } from '../data/mockData';
 import { jobsAPI } from '../services/api';
 import useAuthStore from '../stores/authStore';
@@ -13,6 +15,7 @@ export default function LandingPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCity, setSearchCity] = useState('');
   const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
 
   // Real jobs from API (with match scores from latest CV)
   const [apiJobs, setApiJobs] = useState([]);
@@ -20,25 +23,38 @@ export default function LandingPage() {
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
   const { isAuthenticated } = useAuthStore();
 
-  // Fetch real jobs from backend
-  useEffect(() => {
-    const fetchJobs = async () => {
-      setIsLoadingJobs(true);
-      try {
-        const { data } = await jobsAPI.getFeed();
-        setApiJobs(data.jobs || []);
-        setHasCv(data.has_cv || false);
-      } catch (err) {
+  // Fetch real jobs from backend (extractable for auto-refresh)
+  const fetchJobs = useCallback(async (silent = false) => {
+    if (!silent) setIsLoadingJobs(true);
+    try {
+      const { data } = await jobsAPI.getFeed();
+      setApiJobs(data.jobs || []);
+      setHasCv(data.has_cv || false);
+    } catch (err) {
+      if (!silent) {
         console.warn('Could not fetch job feed, using mock data:', err.message);
         setApiJobs([]);
         setHasCv(false);
-      } finally {
-        setIsLoadingJobs(false);
       }
-    };
+    } finally {
+      if (!silent) setIsLoadingJobs(false);
+    }
+  }, []);
 
+  // Initial fetch
+  useEffect(() => {
     fetchJobs();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchJobs]);
+
+  // Auto-refresh feed mỗi 30 giây — "dopamine cycle"
+  // Tracking data sống 5-10 phút, refresh giúp user thấy đề xuất thay đổi realtime
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const intervalId = setInterval(() => {
+      fetchJobs(true); // silent = true, không show loading spinner
+    }, 30000); // 30 giây
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated, fetchJobs]);
 
   // Build the display jobs: use API data when available, 
   // falling back to mock data structure for compatibility
@@ -54,6 +70,9 @@ export default function LandingPage() {
         matchScore: j.match_score != null ? parseFloat(j.match_score) : null,
         description: j.description,
         experience_level: j.experience_level,
+        // Tracking scores — hiển thị cho tester thấy nguyên lý đề xuất
+        popScore: parseInt(j.pop_score || 0),
+        affinityScore: parseFloat(j.affinity_score || 0),
         _companyName: j.company_name,
         _logoUrl: j.logo_url,
       }));
@@ -242,6 +261,7 @@ export default function LandingPage() {
                       job={job} 
                       company={getCompany(job)} 
                       index={index}
+                      onJobClick={(clickedJob) => setSelectedJob({ job: clickedJob, company: getCompany(clickedJob) })}
                     />
                   ))
                 ) : (
@@ -255,6 +275,17 @@ export default function LandingPage() {
         </section>
 
       </main>
+
+      {/* Job Detail Modal */}
+      <JobDetailModal
+        job={selectedJob?.job}
+        company={selectedJob?.company}
+        isOpen={!!selectedJob}
+        onClose={() => setSelectedJob(null)}
+      />
+
+      {/* Tracking Insights Panel — floating panel góc dưới phải */}
+      <TrackingInsightsPanel onFeedRefresh={() => fetchJobs(true)} />
 
       {/* Footer */}
       <footer className="w-full bg-[#002d5c] border-t border-[#004182] py-12 mt-12 text-center text-blue-200 text-sm">

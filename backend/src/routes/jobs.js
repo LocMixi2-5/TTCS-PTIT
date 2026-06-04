@@ -18,6 +18,38 @@ const { authenticateToken, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// ─── GET /api/jobs/suggestions ───────────────────
+// Get personalized skill suggestions based on tracking
+router.get('/suggestions', optionalAuth, async (req, res, next) => {
+  try {
+    const defaultSuggestions = ['React', 'Java', 'Python', 'AWS'];
+    
+    if (!req.user) {
+      return res.json({ suggestions: defaultSuggestions });
+    }
+
+    // Lấy các tracking events của user trong 10 phút gần đây (auto-cleanup đã lo)
+    const result = await db.raw(`
+      SELECT skill, COUNT(*) as freq
+      FROM user_tracking_events t
+      JOIN jobs j ON t.job_id = j.id
+      CROSS JOIN LATERAL unnest(j.required_skills) as skill
+      WHERE t.user_id = ? AND skill IS NOT NULL
+      GROUP BY skill
+      ORDER BY freq DESC
+      LIMIT 4
+    `, [req.user.id]);
+
+    if (result.rows.length >= 2) {
+      res.json({ suggestions: result.rows.map(r => r.skill) });
+    } else {
+      res.json({ suggestions: defaultSuggestions });
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ─── GET /api/jobs/feed ──────────────────────────
 // Public route (optionalAuth): returns active jobs.
 // If user is logged in & has a completed CV, includes
@@ -35,18 +67,43 @@ router.get('/feed', optionalAuth, async (req, res, next) => {
         .first();
     }
 
-    // Build jobs query with optional match scores
-    let query;
+    // Job popularity from all users tracking events
+    let query = db.with('job_popularity', db.raw(`
+      SELECT job_id, COUNT(*) as pop_score 
+      FROM user_tracking_events 
+      GROUP BY job_id
+    `));
 
+    // Personal affinity from current user's tracking events
+    if (req.user) {
+      query = query.with('user_affinity', db.raw(`
+        SELECT job_id, 
+          SUM(CASE 
+            WHEN event_type = 'APPLY' THEN 15
+            WHEN event_type = 'BOOKMARK' THEN 10
+            WHEN event_type = 'DWELL_TIME' THEN 2
+            WHEN event_type = 'CLICK' THEN 1
+            ELSE 0 
+          END) as affinity_score
+        FROM user_tracking_events
+        WHERE user_id = ?
+        GROUP BY job_id
+      `, [req.user.id]));
+    }
     if (latestCv) {
-      // JOIN with recommendations from latest CV
-      query = db('jobs as j')
+      query = query.from('jobs as j')
         .leftJoin('recommendations as r', function () {
           this.on('j.id', 'r.job_id').andOn('r.cv_id', db.raw('?', [latestCv.id]));
         })
         .leftJoin('companies as c', 'j.company_id', 'c.id')
-        .where('j.is_active', true)
-        .select(
+        .leftJoin('job_popularity as jp', 'j.id', 'jp.job_id')
+        .where('j.is_active', true);
+        
+      if (req.user) {
+        query = query.leftJoin('user_affinity as ua', 'j.id', 'ua.job_id');
+      }
+
+      query = query.select(
           'j.id',
           'j.title',
           'j.description',
@@ -62,15 +119,28 @@ router.get('/feed', optionalAuth, async (req, res, next) => {
           'r.match_score',
           'r.matched_skills',
           'r.rank_position',
-          'j.created_at'
+          'j.created_at',
+          'jp.pop_score',
+          req.user ? 'ua.affinity_score' : db.raw('0 as affinity_score')
         )
-        .orderByRaw('r.match_score DESC NULLS LAST, j.created_at DESC');
+        .orderByRaw(`
+          (COALESCE(r.match_score, 0) * 0.7) + 
+          (LEAST(COALESCE(jp.pop_score, 0), 50) * 0.1) + 
+          (LEAST(COALESCE(ua.affinity_score, 0), 100) * 0.2) DESC NULLS LAST, 
+          RANDOM()
+        `);
     } else {
-      // No CV — return jobs without match scores
-      query = db('jobs as j')
+      // No CV — return jobs without match scores, but rank by implicit feedback
+      query = query.from('jobs as j')
         .leftJoin('companies as c', 'j.company_id', 'c.id')
-        .where('j.is_active', true)
-        .select(
+        .leftJoin('job_popularity as jp', 'j.id', 'jp.job_id')
+        .where('j.is_active', true);
+
+      if (req.user) {
+        query = query.leftJoin('user_affinity as ua', 'j.id', 'ua.job_id');
+      }
+
+      query = query.select(
           'j.id',
           'j.title',
           'j.description',
@@ -85,9 +155,15 @@ router.get('/feed', optionalAuth, async (req, res, next) => {
           'c.logo_url',
           db.raw('NULL as match_score'),
           db.raw('NULL as matched_skills'),
-          db.raw('NULL as rank_position')
+          db.raw('NULL as rank_position'),
+          'jp.pop_score',
+          req.user ? 'ua.affinity_score' : db.raw('0 as affinity_score')
         )
-        .orderBy('j.created_at', 'desc');
+        .orderByRaw(`
+          (LEAST(COALESCE(jp.pop_score, 0), 50) * 0.5) + 
+          (LEAST(COALESCE(ua.affinity_score, 0), 100) * 1.0) DESC NULLS LAST, 
+          RANDOM()
+        `);
     }
 
     const jobs = await query;
@@ -106,6 +182,8 @@ router.get('/feed', optionalAuth, async (req, res, next) => {
         logo_url: j.logo_url,
         match_score: j.match_score ? parseFloat(j.match_score) : null,
         matched_skills: j.matched_skills || [],
+        pop_score: parseInt(j.pop_score || 0),
+        affinity_score: parseFloat(j.affinity_score || 0),
       })),
       total: jobs.length,
       cv_id: latestCv ? latestCv.id : null,
